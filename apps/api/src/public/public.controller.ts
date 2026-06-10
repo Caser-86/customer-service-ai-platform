@@ -2,11 +2,15 @@ import { Controller, Post, Get, Body, Param, Headers, Sse, MessageEvent } from '
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { PublicService } from './public.service';
+import { ConversationEventService } from '../events/conversation-event.service';
 
 @ApiTags('public')
 @Controller('public')
 export class PublicController {
-  constructor(private publicService: PublicService) {}
+  constructor(
+    private publicService: PublicService,
+    private eventService: ConversationEventService,
+  ) {}
 
   @Post('conversations')
   @ApiOperation({ summary: 'Create a new visitor conversation' })
@@ -37,31 +41,29 @@ export class PublicController {
     @Param('id') id: string,
     @Headers('x-visitor-token') visitorToken: string,
   ): Observable<MessageEvent> {
+    // Verify token first
+    this.publicService.verifyVisitorTokenPublic(visitorToken, id);
+
     return new Observable((observer) => {
-      const sendEvent = async () => {
-        try {
-          const messages = await this.publicService.getConversationEvents(visitorToken, id);
-
-          for (const message of messages) {
-            observer.next({
-              data: JSON.stringify({
-                type: 'message',
-                data: message,
-              }),
-            });
-          }
-
+      const subscription = this.eventService.getEventStream(id).subscribe({
+        next: (event) => {
           observer.next({
-            data: JSON.stringify({ type: 'done', data: null }),
+            data: JSON.stringify(event),
           });
+        },
+        error: (err) => observer.error(err),
+        complete: () => observer.complete(),
+      });
 
-          observer.complete();
-        } catch (error) {
-          observer.error(error);
-        }
-      };
+      // Send initial connection message
+      observer.next({
+        data: JSON.stringify({
+          type: 'connected',
+          conversationId: id,
+        }),
+      });
 
-      sendEvent();
+      return () => subscription.unsubscribe();
     });
   }
 }

@@ -4,24 +4,28 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { MetricStrip } from '@/components/MetricStrip';
 import { AutomationChart } from '@/components/AutomationChart';
+import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     fetchAnalytics();
   }, []);
 
   const fetchAnalytics = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/analytics/overview', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setAnalytics(data.data);
+      const result = await apiClient.getAnalytics();
+      if (result.ok) {
+        setAnalytics(result.data);
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error);

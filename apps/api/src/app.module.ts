@@ -7,6 +7,7 @@ import { AgentModule } from './agent/agent.module';
 import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
 import { AiModule } from './ai/ai.module';
+import { EventsModule } from './events/events.module';
 import { configSchema } from './config/config.schema';
 
 @Module({
@@ -23,6 +24,7 @@ import { configSchema } from './config/config.schema';
       },
     }),
     PrismaModule,
+    EventsModule,
     AuthModule,
     PublicModule,
     AgentModule,

@@ -4,10 +4,14 @@ import {
   ForbiddenException
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConversationEventService } from '../events/conversation-event.service';
 
 @Injectable()
 export class AgentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventService: ConversationEventService,
+  ) {}
 
   async getInbox(tenantId: string) {
     const conversations = await this.prisma.conversation.findMany({
@@ -121,6 +125,9 @@ export class AgentService {
         metadata: { messageId: message.id }
       }
     });
+
+    // Publish agent reply event for real-time updates
+    this.eventService.publishAgentReply(conversationId, message.id, content);
 
     return message;
   }

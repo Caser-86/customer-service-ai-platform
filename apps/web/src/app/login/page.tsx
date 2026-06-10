@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/LoginForm';
+import { apiClient } from '@/lib/api-client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,24 +11,17 @@ export default function LoginPage() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await apiClient.login(email, password);
 
-      const data = await response.json();
-
-      if (data.ok) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-        localStorage.setItem('tenant', JSON.stringify(data.data.tenant));
+      if (result.ok && result.data) {
+        localStorage.setItem('user', JSON.stringify(result.data.user));
+        localStorage.setItem('tenant', JSON.stringify(result.data.tenant));
         router.push('/agent');
       } else {
-        setError(data.error?.message || '登录失败');
+        setError(result.error?.message || 'Login failed');
       }
-    } catch (err) {
-      setError('网络错误，请重试');
+    } catch (err: any) {
+      setError(err.message || 'Network error');
     }
   };
 

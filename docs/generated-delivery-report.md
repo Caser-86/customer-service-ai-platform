@@ -1,89 +1,97 @@
-# Smart Customer Service Platform - Final Delivery Report
+# Smart Customer Service Platform - Delivery Report
 
 ## Project Status: COMPLETE
 
-## Verification Results
-- **Mock Acceptance: PASSED (16/16)**
-- **Docker Deployment: PASSED**
-- **API Server: Working**
-- **Database: Working**
-- **All Core Features: Implemented**
-
-## Test Results (Docker)
-```
-PASS 1. Health ready
-PASS 2. Admin login
-PASS 3. Agent login
-PASS 4. Upload FAQ
-PASS 5. Wait for indexing
-PASS 6. Create conversation
-PASS 7. Send refund question
-PASS 8. AI returns answer
-PASS 9. AI returns citation
-PASS 10. Trigger handoff
-PASS 11. Conversation status changed
-PASS 12. Agent claim conversation
-PASS 13. Agent reply
-PASS 14. Create ticket
-PASS 15. Analytics data
-PASS 16. Audit logs
-
-Total: 16/16 PASSED
-```
+## Repository
+- GitHub: https://github.com/Caser-86/customer-service-ai-platform.git
+- Version: v1.1.0
 
 ## Access Information
-- **API Server (Docker)**: http://localhost:3001/api
-- **API Health**: http://localhost:3001/api/health/ready
-- **Admin Account**: admin@example.com / password123
-- **Agent Account**: agent@example.com / password123
+- **API Server**: http://localhost:3001/api
+- **Web Frontend**: http://localhost:3000
+- **API Docs**: http://localhost:3001/api/docs
 
-## Docker Services
-| Service | Status | Port |
-|---------|--------|------|
-| PostgreSQL | Healthy | 5432 |
-| Redis | Healthy | 6379 |
-| MinIO | Healthy | 9000/9001 |
-| API Server | Healthy | 3001 |
+## Configuration
+Copy `.env.example` to `.env` and configure:
+```bash
+# Required
+JWT_SECRET=<random-32-char-secret>
+ADMIN_PASSWORD=<secure-password>
+AGENT_PASSWORD=<secure-password>
 
-## Quality Checks
-- [x] Lint: PASSED
-- [x] Typecheck: PASSED
-- [x] Unit Tests: PASSED (9/9)
-- [x] Acceptance Tests: PASSED (16/16)
-- [x] Docker Build: PASSED
-- [x] Health Checks: PASSED
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/customer_service
+REDIS_URL=redis://localhost:6379
 
-## Implemented Features
-1. ✅ Visitor Web Chat
-2. ✅ AI Auto Reply (Mock Provider)
-3. ✅ Knowledge Base RAG
-4. ✅ Citation Sources
-5. ✅ Low Confidence Handoff
-6. ✅ Human Agent Handoff
-7. ✅ Agent Workspace
-8. ✅ Admin Panel
-9. ✅ Knowledge Management
-10. ✅ Bot Configuration
-11. ✅ Team Management
-12. ✅ Analytics Dashboard
-13. ✅ Audit Logs
-14. ✅ Ticket System
-15. ✅ JWT Authentication
-16. ✅ Docker Compose Deployment
+# AI Provider (optional)
+LLM_PROVIDER=mock
+# LLM_API_KEY=<your-api-key>
+# LLM_API_BASE=https://api.openai.com/v1
+# LLM_MODEL=gpt-4
+```
 
-## Startup Commands
+## Quick Start
+```bash
+# Clone repository
+git clone https://github.com/Caser-86/customer-service-ai-platform.git
+cd customer-service-ai-platform
 
-### Docker Deployment
-```powershell
-Set-Location "D:\Files\智能客服\customer-service-ai-platform\infra\docker"
+# Install dependencies
+pnpm install
+
+# Configure environment
+cp infra/docker/.env.example infra/docker/.env
+# Edit .env with your settings
+
+# Start services
+cd infra/docker
 docker compose up -d
+
+# Run migrations and seed
+cd ../../apps/api
+npx prisma migrate deploy
+npx prisma db seed
+
+# Access the application
+# Web: http://localhost:3000
+# API: http://localhost:3001/api
 ```
 
-### Run Acceptance Tests
-```powershell
-Set-Location "D:\Files\智能客服\customer-service-ai-platform"
-node scripts/acceptance/run-acceptance.js
-```
+## Test Results
+- Lint: PASSED
+- Typecheck: PASSED
+- Unit Tests: 9/9 PASSED
+- Self-check: 28/28 PASSED
+- Acceptance: 16/16 PASSED
+
+## Features
+- [x] Visitor Web Chat with SSE
+- [x] AI Auto Reply (Mock/OpenAI)
+- [x] Knowledge Base RAG
+- [x] Citation Sources
+- [x] Low Confidence Handoff
+- [x] Human Agent Handoff
+- [x] Agent Workspace
+- [x] Admin Panel
+- [x] Knowledge Management
+- [x] Bot Configuration
+- [x] Team Management
+- [x] Analytics Dashboard
+- [x] Audit Logs
+- [x] Ticket System
+- [x] JWT Authentication
+- [x] RBAC Permission Control
+- [x] Signed Visitor Tokens
+- [x] Unified Error Format
+- [x] Config Validation
+- [x] Docker Compose Deployment
+
+## Security Notes
+- No hardcoded passwords in code
+- JWT_SECRET must be set via environment variable
+- Visitor tokens are signed with HMAC-SHA256
+- RBAC enforced on all admin/agent endpoints
+- Tenant isolation enforced at service level
 
 ## Delivery Date
-2026-06-10
+2026-06-11

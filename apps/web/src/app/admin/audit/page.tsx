@@ -3,26 +3,30 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { AuditLogTable } from '@/components/AuditLogTable';
+import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 
 export default function AuditPage() {
+  const router = useRouter();
   const [logs, setLogs] = useState<any[]>([]);
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     fetchLogs();
   }, [pagination.page]);
 
   const fetchLogs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/audit?page=${pagination.page}&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setLogs(data.data.logs);
-        setPagination(data.data.pagination);
+      const result = await apiClient.getAuditLogs(pagination.page, 20);
+      if (result.ok && result.data) {
+        setLogs(result.data.logs || []);
+        setPagination(result.data.pagination || { page: 1, total: 0, pages: 0 });
       }
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);

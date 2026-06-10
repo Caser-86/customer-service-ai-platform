@@ -114,6 +114,13 @@ export class PublicService {
     return Buffer.from(tokenData).toString('base64');
   }
 
+  verifyVisitorTokenPublic(token: string, conversationId: string): void {
+    const tokenData = this.verifyVisitorToken(token);
+    if (tokenData.conversationId !== conversationId) {
+      throw new UnauthorizedException('Invalid token for this conversation');
+    }
+  }
+
   private verifyVisitorToken(token: string): { visitorId: string; conversationId: string; tenantId: string } {
     try {
       const decoded = JSON.parse(Buffer.from(token, 'base64').toString());

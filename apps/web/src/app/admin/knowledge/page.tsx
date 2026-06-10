@@ -4,24 +4,28 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { DocumentUploader } from '@/components/DocumentUploader';
 import { KnowledgeTable } from '@/components/KnowledgeTable';
+import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 
 export default function KnowledgePage() {
+  const router = useRouter();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     fetchDocuments();
   }, []);
 
   const fetchDocuments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/knowledge/documents', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setDocuments(data.data);
+      const result = await apiClient.getDocuments();
+      if (result.ok) {
+        setDocuments(result.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch documents:', error);
@@ -32,15 +36,7 @@ export default function KnowledgePage() {
 
   const handleUpload = async (title: string, content: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/admin/knowledge/documents', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, content, sourceType: 'markdown' }),
-      });
+      await apiClient.uploadDocument(title, content, 'markdown');
       fetchDocuments();
     } catch (error) {
       console.error('Failed to upload document:', error);
@@ -49,11 +45,7 @@ export default function KnowledgePage() {
 
   const handleReindex = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/admin/knowledge/reindex', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.reindexKnowledge();
       fetchDocuments();
     } catch (error) {
       console.error('Failed to reindex:', error);

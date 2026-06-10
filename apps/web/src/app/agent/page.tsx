@@ -5,25 +5,29 @@ import { AgentInbox } from '@/components/AgentInbox';
 import { ConversationWorkspace } from '@/components/ConversationWorkspace';
 import { AiCopilotPanel } from '@/components/AiCopilotPanel';
 import { Sidebar } from '@/components/Sidebar';
+import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 
 export default function AgentPage() {
+  const router = useRouter();
   const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     fetchInbox();
   }, []);
 
   const fetchInbox = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/agent/inbox', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setConversations(data.data);
+      const result = await apiClient.getAgentInbox();
+      if (result.ok) {
+        setConversations(result.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch inbox:', error);
@@ -34,11 +38,7 @@ export default function AgentPage() {
 
   const handleClaim = async (conversationId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/agent/conversations/${conversationId}/claim`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.claimConversation(conversationId);
       fetchInbox();
     } catch (error) {
       console.error('Failed to claim conversation:', error);
@@ -47,15 +47,7 @@ export default function AgentPage() {
 
   const handleReply = async (conversationId: string, content: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/agent/conversations/${conversationId}/reply`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content }),
-      });
+      await apiClient.replyToConversation(conversationId, content);
     } catch (error) {
       console.error('Failed to reply:', error);
     }
@@ -63,15 +55,20 @@ export default function AgentPage() {
 
   const handleClose = async (conversationId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/agent/conversations/${conversationId}/close`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.closeConversation(conversationId);
       setSelectedConversation(null);
       fetchInbox();
     } catch (error) {
       console.error('Failed to close conversation:', error);
+    }
+  };
+
+  const handleCreateTicket = async (conversationId: string, title: string, priority?: string) => {
+    try {
+      await apiClient.createTicket(conversationId, { title, priority });
+      alert('Ticket created');
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
     }
   };
 
@@ -101,6 +98,7 @@ export default function AgentPage() {
                 onClaim={handleClaim}
                 onReply={handleReply}
                 onClose={handleClose}
+                onCreateTicket={handleCreateTicket}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-dark-500">

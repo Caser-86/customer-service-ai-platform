@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MockAiProvider } from './providers/mock-ai.provider';
 import { OpenAiCompatibleProvider } from './providers/openai-compatible.provider';
 import { VectorSearchService } from './vector-search.service';
+import { ConversationEventService } from '../events/conversation-event.service';
 
 @Injectable()
 export class AiOrchestratorService {
@@ -12,7 +13,8 @@ export class AiOrchestratorService {
     private prisma: PrismaService,
     private mockProvider: MockAiProvider,
     private openaiProvider: OpenAiCompatibleProvider,
-    private vectorSearch: VectorSearchService
+    private vectorSearch: VectorSearchService,
+    private eventService: ConversationEventService,
   ) {}
 
   async handleVisitorMessage(
@@ -20,30 +22,15 @@ export class AiOrchestratorService {
     conversationId: string,
     content: string
   ) {
-    this.logger.log(
-      `Handling visitor message for conversation ${conversationId}`
-    );
+    this.logger.log(`Handling visitor message for conversation ${conversationId}`);
 
-    // Save visitor message (single point of truth)
+    // Save visitor message
     await this.prisma.message.create({
-      data: {
-        tenantId,
-        conversationId,
-        role: 'visitor',
-        content
-      }
+      data: { tenantId, conversationId, role: 'visitor', content }
     });
 
     // Check for handoff keywords
-    const handoffKeywords = [
-      '人工',
-      '转人工',
-      '客服',
-      '投诉',
-      'human',
-      'agent',
-      'support'
-    ];
+    const handoffKeywords = ['人工', '转人工', '客服', '投诉', 'human', 'agent', 'support'];
     const shouldHandoff = handoffKeywords.some((keyword) =>
       content.toLowerCase().includes(keyword.toLowerCase())
     );
@@ -53,11 +40,7 @@ export class AiOrchestratorService {
     }
 
     // Search knowledge base
-    const searchResults = await this.vectorSearch.search(
-      tenantId,
-      content,
-      5
-    );
+    const searchResults = await this.vectorSearch.search(tenantId, content, 5);
 
     // Check confidence
     if (searchResults.length === 0 || searchResults[0].score < 0.3) {
@@ -69,20 +52,18 @@ export class AiOrchestratorService {
       where: { tenantId }
     });
 
-    // Generate response
+    // Prepare citations
     const citations = searchResults.map((r) => ({
       documentId: r.documentId,
       content: r.content,
       score: r.score
     }));
 
+    // Generate response
     let response: string;
     let model: string;
 
-    if (
-      botConfig?.provider === 'openai-compatible' &&
-      process.env.LLM_API_KEY
-    ) {
+    if (botConfig?.provider === 'openai-compatible' && process.env.LLM_API_KEY) {
       const result = await this.openaiProvider.generate(content, citations);
       response = result.content;
       model = result.model;
@@ -91,6 +72,16 @@ export class AiOrchestratorService {
       response = result.content;
       model = result.model;
     }
+
+    // Publish token events (simulate streaming)
+    const tokens = response.split('');
+    for (const token of tokens) {
+      this.eventService.publishToken(conversationId, token);
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    // Publish citations
+    this.eventService.publishCitation(conversationId, citations);
 
     // Save AI response
     const aiMessage = await this.prisma.message.create({
@@ -102,6 +93,9 @@ export class AiOrchestratorService {
         citations: citations
       }
     });
+
+    // Publish done
+    this.eventService.publishDone(conversationId, aiMessage.id);
 
     // Save AI run
     await this.prisma.aiRun.create({
@@ -130,11 +124,7 @@ export class AiOrchestratorService {
     };
   }
 
-  private async triggerHandoff(
-    tenantId: string,
-    conversationId: string,
-    reason: string
-  ) {
+  private async triggerHandoff(tenantId: string, conversationId: string, reason: string) {
     // Update conversation status
     await this.prisma.conversation.update({
       where: { id: conversationId },
@@ -143,14 +133,11 @@ export class AiOrchestratorService {
 
     // Create handoff event
     await this.prisma.handoffEvent.create({
-      data: {
-        tenantId,
-        conversationId,
-        reason,
-        fromState: 'open_ai',
-        toState: 'queued_human'
-      }
+      data: { tenantId, conversationId, reason, fromState: 'open_ai', toState: 'queued_human' }
     });
+
+    // Publish handoff event
+    this.eventService.publishHandoff(conversationId, reason);
 
     // Save system message
     const systemMessage = await this.prisma.message.create({
@@ -164,12 +151,7 @@ export class AiOrchestratorService {
 
     // Save AI run
     await this.prisma.aiRun.create({
-      data: {
-        tenantId,
-        conversationId,
-        model: 'none',
-        status: 'handoff'
-      }
+      data: { tenantId, conversationId, model: 'none', status: 'handoff' }
     });
 
     // Audit log
