@@ -1,0 +1,19 @@
+{
+  "name": "customer-service-ai-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "e2e": "turbo e2e",
+    "self-check": "node scripts/self-check/run-self-check.js",
+    "acceptance": "node scripts/acceptance/run-acceptance.js"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@cs/api-prisma",
+  "version": "1.0.0",
+  "private": true,
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} ./seed.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0"
+  }
+}
