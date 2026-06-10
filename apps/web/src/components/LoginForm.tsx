@@ -65,8 +65,7 @@ export function LoginForm({ onSubmit, error }: LoginFormProps) {
       </button>
 
       <div className="mt-6 text-center text-sm text-dark-500">
-        <p>测试账号：admin@example.com / agent@example.com</p>
-        <p>密码：password123</p>
+        <p>Contact admin for account credentials</p>
       </div>
     </form>
   );

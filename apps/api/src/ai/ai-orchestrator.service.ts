@@ -24,7 +24,7 @@ export class AiOrchestratorService {
       `Handling visitor message for conversation ${conversationId}`
     );
 
-    // Step 1: Save visitor message
+    // Save visitor message (single point of truth)
     await this.prisma.message.create({
       data: {
         tenantId,
@@ -34,7 +34,7 @@ export class AiOrchestratorService {
       }
     });
 
-    // Step 2: Check for handoff keywords
+    // Check for handoff keywords
     const handoffKeywords = [
       '人工',
       '转人工',
@@ -52,20 +52,24 @@ export class AiOrchestratorService {
       return this.triggerHandoff(tenantId, conversationId, 'keyword_match');
     }
 
-    // Step 3: Search knowledge base
-    const searchResults = await this.vectorSearch.search(tenantId, content, 5);
+    // Search knowledge base
+    const searchResults = await this.vectorSearch.search(
+      tenantId,
+      content,
+      5
+    );
 
-    // Step 4: Check confidence
+    // Check confidence
     if (searchResults.length === 0 || searchResults[0].score < 0.3) {
       return this.triggerHandoff(tenantId, conversationId, 'low_confidence');
     }
 
-    // Step 5: Get bot config
+    // Get bot config
     const botConfig = await this.prisma.botConfig.findFirst({
       where: { tenantId }
     });
 
-    // Step 6: Generate response
+    // Generate response
     const citations = searchResults.map((r) => ({
       documentId: r.documentId,
       content: r.content,
@@ -88,7 +92,7 @@ export class AiOrchestratorService {
       model = result.model;
     }
 
-    // Step 7: Save AI response
+    // Save AI response
     const aiMessage = await this.prisma.message.create({
       data: {
         tenantId,
@@ -99,7 +103,7 @@ export class AiOrchestratorService {
       }
     });
 
-    // Step 8: Save AI run
+    // Save AI run
     await this.prisma.aiRun.create({
       data: {
         tenantId,
@@ -112,7 +116,7 @@ export class AiOrchestratorService {
       }
     });
 
-    // Step 9: Update conversation
+    // Update conversation
     await this.prisma.conversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date() }
@@ -165,6 +169,18 @@ export class AiOrchestratorService {
         conversationId,
         model: 'none',
         status: 'handoff'
+      }
+    });
+
+    // Audit log
+    await this.prisma.auditLog.create({
+      data: {
+        tenantId,
+        actorId: 'system',
+        action: 'conversation.handoff',
+        resourceType: 'conversation',
+        resourceId: conversationId,
+        metadata: { reason }
       }
     });
 

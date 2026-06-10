@@ -19,10 +19,14 @@ async function main() {
   });
   console.log('租户创建完成:', tenant.id);
 
-  // 创建管理员
-  const adminPasswordHash = await bcrypt.hash('password123', 10);
+  // Create admin
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    throw new Error('ADMIN_PASSWORD environment variable is required');
+  }
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   const admin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: 'admin@example.com' } },
+    where: { tenantId_email: { tenantId: tenant.id, email: process.env.ADMIN_EMAIL || 'admin@example.com' } },
     update: {},
     create: {
       tenantId: tenant.id,
@@ -35,10 +39,14 @@ async function main() {
   });
   console.log('管理员创建完成:', admin.id);
 
-  // 创建坐席
-  const agentPasswordHash = await bcrypt.hash('password123', 10);
+  // Create agent
+  const agentPassword = process.env.AGENT_PASSWORD;
+  if (!agentPassword) {
+    throw new Error('AGENT_PASSWORD environment variable is required');
+  }
+  const agentPasswordHash = await bcrypt.hash(agentPassword, 10);
   const agent = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: tenant.id, email: 'agent@example.com' } },
+    where: { tenantId_email: { tenantId: tenant.id, email: process.env.AGENT_EMAIL || 'agent@example.com' } },
     update: {},
     create: {
       tenantId: tenant.id,
