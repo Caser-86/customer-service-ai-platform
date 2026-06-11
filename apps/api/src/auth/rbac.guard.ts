@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Permission, hasPermission } from './permissions';
 
@@ -11,7 +16,7 @@ export class RbacGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
       PERMISSIONS_KEY,
-      [context.getHandler(), context.getClass()],
+      [context.getHandler(), context.getClass()]
     );
 
     if (!requiredPermissions || requiredPermissions.length === 0) {
@@ -26,7 +31,7 @@ export class RbacGuard implements CanActivate {
     }
 
     const hasAllPermissions = requiredPermissions.every((permission) =>
-      hasPermission(user.roles, permission),
+      hasPermission(user.roles, permission)
     );
 
     if (!hasAllPermissions) {

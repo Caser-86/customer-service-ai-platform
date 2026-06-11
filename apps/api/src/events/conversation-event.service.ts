@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Subject, Observable } from 'rxjs';
 
 export interface ConversationEvent {
-  type: 'message.token' | 'message.citation' | 'message.done' | 'conversation.handoff' | 'agent.reply';
+  type:
+    | 'message.token'
+    | 'message.citation'
+    | 'message.done'
+    | 'conversation.handoff'
+    | 'agent.reply';
   conversationId: string;
   data: any;
 }
@@ -29,7 +34,7 @@ export class ConversationEventService {
     this.publishEvent({
       type: 'message.token',
       conversationId,
-      data: { token },
+      data: { token }
     });
   }
 
@@ -37,7 +42,7 @@ export class ConversationEventService {
     this.publishEvent({
       type: 'message.citation',
       conversationId,
-      data: { citations },
+      data: { citations }
     });
   }
 
@@ -45,7 +50,7 @@ export class ConversationEventService {
     this.publishEvent({
       type: 'message.done',
       conversationId,
-      data: { messageId },
+      data: { messageId }
     });
   }
 
@@ -53,15 +58,19 @@ export class ConversationEventService {
     this.publishEvent({
       type: 'conversation.handoff',
       conversationId,
-      data: { reason },
+      data: { reason }
     });
   }
 
-  publishAgentReply(conversationId: string, messageId: string, content: string) {
+  publishAgentReply(
+    conversationId: string,
+    messageId: string,
+    content: string
+  ) {
     this.publishEvent({
       type: 'agent.reply',
       conversationId,
-      data: { messageId, content },
+      data: { messageId, content }
     });
   }
 

@@ -26,9 +26,12 @@ export class AdminController {
   @ApiOperation({ summary: 'Upload knowledge document' })
   async uploadDocument(
     @Body() body: { title: string; content: string; sourceType?: string },
-    @Request() req: any,
+    @Request() req: any
   ) {
-    const result = await this.adminService.uploadDocument(req.user.tenantId, body);
+    const result = await this.adminService.uploadDocument(
+      req.user.tenantId,
+      body
+    );
     return { ok: true, data: result };
   }
 
@@ -62,12 +65,12 @@ export class AdminController {
   async getAuditLogs(
     @Query('page') page: string,
     @Query('limit') limit: string,
-    @Request() req: any,
+    @Request() req: any
   ) {
     const result = await this.adminService.getAuditLogs(
       req.user.tenantId,
       parseInt(page) || 1,
-      parseInt(limit) || 50,
+      parseInt(limit) || 50
     );
     return { ok: true, data: result };
   }
@@ -76,10 +79,14 @@ export class AdminController {
   @RequirePermissions(Permission.BOT_WRITE)
   @ApiOperation({ summary: 'Update bot configuration' })
   async updateBotConfig(
-    @Body() body: { provider?: string; model?: string; handoffThreshold?: number },
-    @Request() req: any,
+    @Body()
+    body: { provider?: string; model?: string; handoffThreshold?: number },
+    @Request() req: any
   ) {
-    const result = await this.adminService.updateBotConfig(req.user.tenantId, body);
+    const result = await this.adminService.updateBotConfig(
+      req.user.tenantId,
+      body
+    );
     return { ok: true, data: result };
   }
 

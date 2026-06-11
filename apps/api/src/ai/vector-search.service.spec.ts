@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 describe('VectorSearch', () => {
   it('should split content into chunks', () => {
     function splitContent(content: string): string[] {
-      const paragraphs = content.split('\n\n').filter(p => p.trim());
+      const paragraphs = content.split('\n\n').filter((p) => p.trim());
       if (paragraphs.length <= 3) return paragraphs;
       const chunks: string[] = [];
       let currentChunk = '';

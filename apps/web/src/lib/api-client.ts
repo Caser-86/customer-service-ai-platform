@@ -47,23 +47,19 @@ class ApiClient {
       requestHeaders['Authorization'] = `Bearer ${this.token}`;
     }
 
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: requestHeaders,
-        body: body ? JSON.stringify(body) : undefined,
-      });
+    const response = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Request failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Request failed');
     }
+
+    return data;
   }
 
   async get<T>(path: string): Promise<ApiResponse<T>> {

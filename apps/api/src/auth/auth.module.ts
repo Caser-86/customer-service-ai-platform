@@ -18,14 +18,14 @@ import { JwtStrategy } from './jwt.strategy';
         }
         return {
           secret,
-          signOptions: { expiresIn: '24h' },
+          signOptions: { expiresIn: '24h' }
         };
       },
-      inject: [ConfigService],
-    }),
+      inject: [ConfigService]
+    })
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService]
 })
 export class AuthModule {}

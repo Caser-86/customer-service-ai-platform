@@ -11,15 +11,15 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    credentials: true,
+    credentials: true
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true,
-    }),
+      transform: true
+    })
   );
 
   app.useGlobalFilters(new GlobalExceptionFilter());

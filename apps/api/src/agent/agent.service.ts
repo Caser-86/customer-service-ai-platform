@@ -10,7 +10,7 @@ import { ConversationEventService } from '../events/conversation-event.service';
 export class AgentService {
   constructor(
     private prisma: PrismaService,
-    private eventService: ConversationEventService,
+    private eventService: ConversationEventService
   ) {}
 
   async getInbox(tenantId: string) {

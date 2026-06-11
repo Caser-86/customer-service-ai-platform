@@ -4,7 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
+  Logger
 } from '@nestjs/common';
 import { Response } from 'express';
 
@@ -40,8 +40,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       ok: false,
       error: {
         code,
-        message,
-      },
+        message
+      }
     });
   }
 
@@ -54,7 +54,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       409: 'CONFLICT',
       422: 'UNPROCESSABLE_ENTITY',
       429: 'TOO_MANY_REQUESTS',
-      500: 'INTERNAL_ERROR',
+      500: 'INTERNAL_ERROR'
     };
     return errorCodes[status] || 'INTERNAL_ERROR';
   }

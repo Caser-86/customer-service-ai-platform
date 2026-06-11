@@ -17,11 +17,13 @@ import { configSchema } from './config/config.schema';
       validate: (config) => {
         const result = configSchema.safeParse(config);
         if (!result.success) {
-          const errors = result.error.errors.map(e => `${e.path}: ${e.message}`).join(', ');
+          const errors = result.error.errors
+            .map((e) => `${e.path}: ${e.message}`)
+            .join(', ');
           throw new Error(`Configuration validation failed: ${errors}`);
         }
         return result.data;
-      },
+      }
     }),
     PrismaModule,
     EventsModule,
@@ -30,7 +32,7 @@ import { configSchema } from './config/config.schema';
     AgentModule,
     AdminModule,
     HealthModule,
-    AiModule,
-  ],
+    AiModule
+  ]
 })
 export class AppModule {}

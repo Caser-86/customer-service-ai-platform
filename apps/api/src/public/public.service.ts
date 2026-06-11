@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiOrchestratorService } from '../ai/ai-orchestrator.service';
 import { ConfigService } from '@nestjs/config';
@@ -11,14 +15,19 @@ export class PublicService {
   constructor(
     private prisma: PrismaService,
     private aiOrchestrator: AiOrchestratorService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {
-    this.visitorTokenSecret = this.configService.get<string>('VISITOR_TOKEN_SECRET') || 'visitor-secret-change-me';
+    this.visitorTokenSecret =
+      this.configService.get<string>('VISITOR_TOKEN_SECRET') ||
+      'visitor-secret-change-me';
   }
 
-  async createConversation(tenantSlug: string, data: { name?: string; email?: string; metadata?: any }) {
+  async createConversation(
+    tenantSlug: string,
+    data: { name?: string; email?: string; metadata?: any }
+  ) {
     const tenant = await this.prisma.tenant.findFirst({
-      where: { slug: tenantSlug, status: 'active' },
+      where: { slug: tenantSlug, status: 'active' }
     });
 
     if (!tenant) {
@@ -31,8 +40,8 @@ export class PublicService {
         externalId: crypto.randomUUID(),
         name: data.name,
         email: data.email,
-        metadata: data.metadata,
-      },
+        metadata: data.metadata
+      }
     });
 
     const conversation = await this.prisma.conversation.create({
@@ -40,11 +49,15 @@ export class PublicService {
         tenantId: tenant.id,
         visitorId: visitor.id,
         channel: 'web',
-        status: 'open_ai',
-      },
+        status: 'open_ai'
+      }
     });
 
-    const visitorToken = this.generateVisitorToken(visitor.id, conversation.id, tenant.id);
+    const visitorToken = this.generateVisitorToken(
+      visitor.id,
+      conversation.id,
+      tenant.id
+    );
 
     return {
       conversationId: conversation.id,
@@ -52,12 +65,16 @@ export class PublicService {
       visitor: {
         id: visitor.id,
         name: visitor.name,
-        email: visitor.email,
-      },
+        email: visitor.email
+      }
     };
   }
 
-  async sendMessage(visitorToken: string, conversationId: string, content: string) {
+  async sendMessage(
+    visitorToken: string,
+    conversationId: string,
+    content: string
+  ) {
     const tokenData = this.verifyVisitorToken(visitorToken);
     if (tokenData.conversationId !== conversationId) {
       throw new UnauthorizedException('Invalid token for this conversation');
@@ -67,8 +84,8 @@ export class PublicService {
       where: {
         id: conversationId,
         tenantId: tokenData.tenantId,
-        visitorId: tokenData.visitorId,
-      },
+        visitorId: tokenData.visitorId
+      }
     });
 
     if (!conversation) {
@@ -78,12 +95,12 @@ export class PublicService {
     const aiResponse = await this.aiOrchestrator.handleVisitorMessage(
       tokenData.tenantId,
       conversationId,
-      content,
+      content
     );
 
     return {
       streamUrl: `/api/public/conversations/${conversationId}/events`,
-      aiResponse,
+      aiResponse
     };
   }
 
@@ -96,15 +113,19 @@ export class PublicService {
     const messages = await this.prisma.message.findMany({
       where: {
         tenantId: tokenData.tenantId,
-        conversationId,
+        conversationId
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'asc' }
     });
 
     return messages;
   }
 
-  private generateVisitorToken(visitorId: string, conversationId: string, tenantId: string): string {
+  private generateVisitorToken(
+    visitorId: string,
+    conversationId: string,
+    tenantId: string
+  ): string {
     const payload = JSON.stringify({ visitorId, conversationId, tenantId });
     const signature = crypto
       .createHmac('sha256', this.visitorTokenSecret)
@@ -121,7 +142,11 @@ export class PublicService {
     }
   }
 
-  private verifyVisitorToken(token: string): { visitorId: string; conversationId: string; tenantId: string } {
+  private verifyVisitorToken(token: string): {
+    visitorId: string;
+    conversationId: string;
+    tenantId: string;
+  } {
     try {
       const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
       const expectedSignature = crypto

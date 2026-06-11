@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 describe('Auth', () => {
   it('should hash and verify password', () => {
-    const bcrypt = require('bcryptjs');
     const password = 'password123';
     const hash = bcrypt.hashSync(password, 10);
     expect(bcrypt.compareSync(password, hash)).toBe(true);
@@ -10,7 +11,6 @@ describe('Auth', () => {
   });
 
   it('should generate valid JWT', () => {
-    const jwt = require('jsonwebtoken');
     const secret = 'test-secret';
     const payload = { sub: 'user-1', email: 'test@test.com', roles: ['admin'] };
     const token = jwt.sign(payload, secret, { expiresIn: '1h' });

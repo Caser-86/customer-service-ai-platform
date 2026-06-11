@@ -14,7 +14,7 @@ export class AiOrchestratorService {
     private mockProvider: MockAiProvider,
     private openaiProvider: OpenAiCompatibleProvider,
     private vectorSearch: VectorSearchService,
-    private eventService: ConversationEventService,
+    private eventService: ConversationEventService
   ) {}
 
   async handleVisitorMessage(
@@ -22,7 +22,9 @@ export class AiOrchestratorService {
     conversationId: string,
     content: string
   ) {
-    this.logger.log(`Handling visitor message for conversation ${conversationId}`);
+    this.logger.log(
+      `Handling visitor message for conversation ${conversationId}`
+    );
 
     // Save visitor message
     await this.prisma.message.create({
@@ -30,7 +32,15 @@ export class AiOrchestratorService {
     });
 
     // Check for handoff keywords
-    const handoffKeywords = ['人工', '转人工', '客服', '投诉', 'human', 'agent', 'support'];
+    const handoffKeywords = [
+      '人工',
+      '转人工',
+      '客服',
+      '投诉',
+      'human',
+      'agent',
+      'support'
+    ];
     const shouldHandoff = handoffKeywords.some((keyword) =>
       content.toLowerCase().includes(keyword.toLowerCase())
     );
@@ -63,7 +73,10 @@ export class AiOrchestratorService {
     let response: string;
     let model: string;
 
-    if (botConfig?.provider === 'openai-compatible' && process.env.LLM_API_KEY) {
+    if (
+      botConfig?.provider === 'openai-compatible' &&
+      process.env.LLM_API_KEY
+    ) {
       const result = await this.openaiProvider.generate(content, citations);
       response = result.content;
       model = result.model;
@@ -77,7 +90,7 @@ export class AiOrchestratorService {
     const tokens = response.split('');
     for (const token of tokens) {
       this.eventService.publishToken(conversationId, token);
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
     // Publish citations
@@ -124,7 +137,11 @@ export class AiOrchestratorService {
     };
   }
 
-  private async triggerHandoff(tenantId: string, conversationId: string, reason: string) {
+  private async triggerHandoff(
+    tenantId: string,
+    conversationId: string,
+    reason: string
+  ) {
     // Update conversation status
     await this.prisma.conversation.update({
       where: { id: conversationId },
@@ -133,7 +150,13 @@ export class AiOrchestratorService {
 
     // Create handoff event
     await this.prisma.handoffEvent.create({
-      data: { tenantId, conversationId, reason, fromState: 'open_ai', toState: 'queued_human' }
+      data: {
+        tenantId,
+        conversationId,
+        reason,
+        fromState: 'open_ai',
+        toState: 'queued_human'
+      }
     });
 
     // Publish handoff event
