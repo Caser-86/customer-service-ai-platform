@@ -18,4 +18,10 @@ export class HealthController {
   async ready() {
     return this.healthService.checkReady();
   }
+
+  @Get('detailed')
+  @ApiOperation({ summary: 'Detailed health check with metrics' })
+  async detailed() {
+    return this.healthService.getDetailedHealth();
+  }
 }
