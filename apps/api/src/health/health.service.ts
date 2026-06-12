@@ -31,8 +31,16 @@ export class HealthService {
 
     // Redis 检查
     try {
-      // TODO: 实现 Redis 连接检查
-      checks.redis = 'healthy';
+      const redisUrl = this.configService.get<string>('REDIS_URL');
+      if (redisUrl) {
+        const response = await fetch(redisUrl.replace('redis://', 'http://'), {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000)
+        });
+        checks.redis = response.ok ? 'healthy' : 'unhealthy';
+      } else {
+        checks.redis = 'not_configured';
+      }
     } catch (error) {
       checks.redis = 'unhealthy';
       checks.redis_error = error.message;
@@ -40,8 +48,19 @@ export class HealthService {
 
     // MinIO 检查
     try {
-      // TODO: 实现 MinIO 连接检查
-      checks.minio = 'healthy';
+      const minioEndpoint = this.configService.get<string>(
+        'MINIO_ENDPOINT',
+        'localhost'
+      );
+      const minioPort = this.configService.get<number>('MINIO_PORT', 9000);
+      const response = await fetch(
+        `http://${minioEndpoint}:${minioPort}/minio/health/live`,
+        {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000)
+        }
+      );
+      checks.minio = response.ok ? 'healthy' : 'unhealthy';
     } catch (error) {
       checks.minio = 'unhealthy';
       checks.minio_error = error.message;

@@ -36,38 +36,43 @@ async function bootstrap() {
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader(
       'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains'
     );
     res.setHeader('Content-Security-Policy', "default-src 'self'");
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=()');
     next();
   });
 
-  // Swagger 文档
-  const config = new DocumentBuilder()
-    .setTitle('Customer Service AI Platform')
-    .setDescription('Intelligent Customer Service API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('auth', '认证相关接口')
-    .addTag('public', '访客公开接口')
-    .addTag('agent', '客服工作台接口')
-    .addTag('admin', '管理后台接口')
-    .addTag('health', '健康检查接口')
-    .build();
+  // Swagger 文档（仅在非生产环境启用）
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Customer Service AI Platform')
+      .setDescription('Intelligent Customer Service API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .addTag('auth', '认证相关接口')
+      .addTag('public', '访客公开接口')
+      .addTag('agent', '客服工作台接口')
+      .addTag('admin', '管理后台接口')
+      .addTag('health', '健康检查接口')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true
-    }
-  });
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true
+      }
+    });
+    console.log(
+      `API Documentation: http://localhost:${process.env.PORT || 3001}/api/docs`
+    );
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`API Documentation: http://localhost:${port}/api/docs`);
 }
 bootstrap();
