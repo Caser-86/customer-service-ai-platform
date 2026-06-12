@@ -1,13 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 
 @Injectable()
 export class HealthService {
+  private redis: Redis | null = null;
+
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService
-  ) {}
+  ) {
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    if (redisUrl) {
+      this.redis = new Redis(redisUrl, {
+        maxRetriesPerRequest: 1,
+        connectTimeout: 5000,
+        lazyConnect: true
+      });
+    }
+  }
 
   async checkLive() {
     return {
@@ -31,13 +43,11 @@ export class HealthService {
 
     // Redis 检查
     try {
-      const redisUrl = this.configService.get<string>('REDIS_URL');
-      if (redisUrl) {
-        const response = await fetch(redisUrl.replace('redis://', 'http://'), {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000)
-        });
-        checks.redis = response.ok ? 'healthy' : 'unhealthy';
+      if (this.redis) {
+        await this.redis.connect();
+        const result = await this.redis.ping();
+        checks.redis = result === 'PONG' ? 'healthy' : 'unhealthy';
+        await this.redis.disconnect();
       } else {
         checks.redis = 'not_configured';
       }

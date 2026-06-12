@@ -92,6 +92,9 @@ curl -f http://localhost:3001/api/health/ready || {
 }
 
 echo "✓ 部署完成!"
-echo "API 地址: http://localhost:3001"
-echo "Web 地址: http://localhost:3000"
-echo "API 文档: http://localhost:3001/api/docs"
+echo "API 地址: https://localhost:3001"
+echo "Web 地址: https://localhost:3000"
+echo "健康检查: https://localhost/api/health/ready"
+echo ""
+echo "注意: 如使用自签名证书，浏览器会显示安全警告"
+echo "生产环境请使用受信任的 SSL 证书"
